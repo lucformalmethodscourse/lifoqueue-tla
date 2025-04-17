@@ -1,65 +1,43 @@
 -------------------------- MODULE Stack  --------------------------
 
-EXTENDS Naturals
+\* https://jack-vanlightly.com/blog/2023/10/10/the-importance-of-liveness-properties-part-2
 
-CONSTANTS
-    MAX_CANS,
-    MAX_COINS
+EXTENDS Naturals, Sequences
+
+CONSTANTS 
+    CAPACITY
 
 VARIABLES
-    coinInserted,
-    cansAvailable,
-    cansDispensed,
-    coinsCollected
+    top,
+    items
 
-vars == << coinInserted, cansAvailable, cansDispensed, coinsCollected >>
+vars == << top, items >>
 
 TypeOK ==
-    /\ coinInserted \in {FALSE, TRUE}
-    /\ cansAvailable \in 0 .. MAX_CANS
-    /\ cansDispensed >= 0
-    /\ coinsCollected \in 0 .. MAX_COINS
+    /\ top \in Nat
+    /\ top <= CAPACITY
+\* TODO /\ items \in 
 
 Init ==
-    /\ coinInserted = FALSE
-    /\ cansAvailable \in 0 .. MAX_CANS
-    /\ coinsCollected \in 0 .. MAX_COINS
-    /\ cansDispensed = coinsCollected
+    /\ top = 0
+    /\ items = << >>    
 
-InsertCoin ==
-    /\ ~ coinInserted
-    /\ coinInserted' = TRUE
-    /\ UNCHANGED << cansAvailable, cansDispensed, coinsCollected >>
+Add == \E v \in 0 .. 10 : 
+    /\ top < CAPACITY
+    /\ top' = top + 1
+    /\ items' = << v >> \o items
 
-Buy ==
-    /\ coinInserted
-    /\ coinsCollected < MAX_COINS
-    /\ cansAvailable > 0
-    /\ coinInserted' = FALSE
-    /\ coinsCollected' = coinsCollected + 1
-    /\ cansAvailable' = cansAvailable - 1
-    /\ cansDispensed' = cansDispensed + 1
-
-Cancel ==
-    /\ coinInserted
-    /\ coinInserted' = FALSE
-    /\ UNCHANGED << cansAvailable, cansDispensed, coinsCollected >>
-
-\* Timeout
-
-\* RestockInventory
-
-\* CollectCoins
+Remove == 
+    /\ top > 0
+    /\ top' = top - 1
+    /\ items' = Tail(items)
 
 Next ==
-    \/ InsertCoin
-    \/ Buy
-    \/ Cancel
+    \/ Add
+    \/ Remove
 
-Spec == Init /\ [][Next]_<<vars>> /\ WF_vars(Next)
+Spec == Init /\ [][Next]_<<vars>>
 
-Accounting == coinsCollected = cansDispensed
-
-Correctness == [](coinInserted ~> ~ coinInserted)
+\* TODO suitable invariants and properties
 
 ====
